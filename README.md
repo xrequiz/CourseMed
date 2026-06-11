@@ -12,10 +12,12 @@
 
 ## ארכיטקטורה
 
-- **צד לקוח:** React + Vite + Tailwind CSS (עברית, RTL)
-- **צד שרת:** פונקציית Serverless אחת (`api/chat.js`) שמתווכת מול ה-API של Anthropic (Claude).
+- **צד לקוח:** React + Vite + Tailwind CSS (עברית, RTL), כולל קלט קולי (Web Speech API) בדפדפנים תומכים.
+- **צד שרת:** פונקציית Serverless אחת (`api/chat.js`) שמתווכת מול ה-API של Anthropic (Claude) ומזרימה את התשובות (streaming).
   **מפתח ה-API נשמר אך ורק בצד השרת** (משתנה סביבה) — הוא לעולם לא נחשף לדפדפן.
-- **אחסון אישי:** `localStorage` בדפדפן בלבד — שום מידע אישי לא נשמר בשרת.
+- **כל ה-system prompts נמצאים בשרת בלבד** (`api/_prompts.js`): הלקוח שולח רק `promptId`, כך שה-endpoint הציבורי לא יכול לשמש כפרוקסי חופשי ל-Claude.
+- **Rate limiting** מובנה ב-`api/chat.js` (פר-IP) כהגנה נוספת מפני ניצול לרעה.
+- **אחסון אישי:** `localStorage` בדפדפן בלבד (בנק אירועים, צ'קליסט, היסטוריית משובים) — שום מידע אישי לא נשמר בשרת.
 
 ## פריסה ל-Vercel (חינמי) — מומלץ
 
@@ -53,10 +55,19 @@ ANTHROPIC_API_KEY=sk-ant-... vercel dev
 ## מבנה הפרויקט
 
 ```
-├── api/chat.js        # פרוקסי צד-שרת ל-Anthropic API (המפתח נשאר כאן)
-├── src/App.jsx        # כל האפליקציה (עברית, RTL)
-├── src/main.jsx
-├── src/index.css      # Tailwind
+├── api/
+│   ├── chat.js          # פרוקסי צד-שרת ל-Anthropic API: ולידציה, rate limit, streaming
+│   └── _prompts.js      # כל ה-system prompts (לא נחשף כ-route)
+├── src/
+│   ├── App.jsx          # ניווט ומעטפת
+│   ├── theme.js         # צבעים ופונטים
+│   ├── data.js          # תוכן: שאלות, תרחישים, טיפים
+│   ├── lib/
+│   │   ├── api.js       # קריאות לשרת עם streaming
+│   │   └── store.js     # localStorage + היסטוריית תרגול
+│   ├── components/      # רכיבי המסכים (ביוגרפי, סימולציה, יום מבחן...)
+│   ├── main.jsx
+│   └── index.css        # Tailwind
 └── index.html
 ```
 
